@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Nov 16 14:12:33 2024
+Created on Sat Nov 16 16:51:13 2024
 
-@author: buses
+@author: silag
 """
 
 from ultralytics import YOLO
@@ -10,7 +10,7 @@ from ultralytics import YOLO
 import torch
 
 
-model=YOLO("C:/Users/buses/Desktop/PCB/datasets/yolov8m.pt")
+model=YOLO('C:/Users/silag/OneDrive/Belgeler/vscode_training/yolov8m.pt')
 ### load a model
 #model=YOLO("yolov8m.pt")
 # print("Starting trainin ...")
@@ -30,14 +30,25 @@ device=torch.device("cuda")
 if __name__ == "__main__":
     model.to(device)
     model.train(
-        data="C:/Users/buses/Desktop/PCB/datasets/data.yaml",
+        data="C:/Users/silag/OneDrive/Masaüstü/bigdata/PCB DEFECT DETECTION ULTRA.v6i.yolov8/data.yaml",
         epochs=100,
         batch=16, 
         optimizer="Adam",
-        lr0=1e-5,
         device=device,
-        imgsz=640,
+        imgsz=416,
+        multi_scale=True,
          
         # cache=False,
         # amp=False,
-        ) 
+        )
+
+# # Train the YOLO model
+# model = YOLO('yolov8m.pt')  # Use a smaller model if necessary (e.g., yolov8n.pt)
+# model.train(data='C:/Users/silag/PCB-5/data.yaml', 
+#             epochs=100, 
+#             batch=8, 
+#             imgsz=512, 
+#             workers=2, 
+#             device=0, 
+#             amp=True, 
+#             name="Optimized_Training")
