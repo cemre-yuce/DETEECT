@@ -1,0 +1,49 @@
+import sys
+import cv2 as cv
+import numpy as np
+import easyocr
+import torch
+print(torch.cuda.is_available())  # Should return True
+print(torch.version.cuda)         # Prints the CUDA version PyTorch is built for
+
+# Define the image file path in a variable
+image_file = 'Component_placement.page1.png'  # You can change this to any image file
+
+# Load the image file using the variable
+src = cv.imread(image_file, cv.IMREAD_COLOR)
+reader = easyocr.Reader(['en'], gpu=True)
+
+texts = reader.readtext(src)
+font = cv.FONT_HERSHEY_SIMPLEX
+# Check if the image was successfully loaded
+if src is None:
+    print(f"Error: Unable to load the image file '{image_file}'.")
+else:
+
+    mdf_src = src
+    for i in texts:
+        print(i)
+
+        bbox, text, score = i
+
+        cv.rectangle(mdf_src, bbox[0], bbox[2], (255, 0, 255), 5)
+        cv.putText(mdf_src, text, bbox[0], font, 10, (255, 0, 0), 3)
+    # Get screen dimensions (for dynamic scaling)
+    screen_width = 1600  # Replace with your screen's width in pixels
+    screen_height = 900  # Replace with your screen's height in pixels
+
+    # Get original image dimensions
+    img_height, img_width = mdf_src.shape[:2]
+
+    # Calculate scale factor to fit the image on the screen
+    scale_width = screen_width / img_width
+    scale_height = screen_height / img_height
+    scale = min(scale_width, scale_height, 1.0)  # Ensure the scale is ≤ 1.0
+
+    # Resize the image based on the calculated scale
+    resized_mdf_src = cv.resize(mdf_src, (0, 0), fx=scale, fy=scale)
+    # Display the resized image
+
+    cv.imshow('Resized Text Src (Fit to Screen)', resized_mdf_src)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
