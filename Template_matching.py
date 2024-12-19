@@ -3,16 +3,15 @@ import numpy as np
 from os import listdir
 from os.path import isfile, join
 
-mypath = "C:/Users/talha/PycharmProjects/PCB_defect/templates2"
+mypath = "C:/Users/talha/PycharmProjects/PCB_defect/buyutech_arka_templates"
 onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-
 drag = False
 drag_start = (0, 0)
 drag_end = (0, 0)
 patterns = []
 regions = []
 show_regions = False
-show_mask = True
+show_mask = False
 scale_factor = 1.0  # Global scale factor for resizing
 
 
@@ -94,8 +93,11 @@ def process_image(image_path):
     cv2.setMouseCallback('detEEct AOI', on_mouse, 0)
 
     try:
+        display_defects = False  # Flag to control when to display defect count
+
         while True:
             diff = resized_img.copy()
+            red_rectangle_count = len(regions)  # Initialize to the number of regions
 
             if show_mask:
                 resized_mask = cv2.resize(mask, (resized_img.shape[1], resized_img.shape[0]),
@@ -121,7 +123,8 @@ def process_image(image_path):
                     scaled_x2 = int(x2 * scale_factor)
                     scaled_y2 = int(y2 * scale_factor)
 
-                    cv2.rectangle(diff, (scaled_x1, scaled_y1), (scaled_x2, scaled_y2), (0, 255, 0), 1)
+                    # Draw a red rectangle
+                    cv2.rectangle(diff, (scaled_x1, scaled_y1), (scaled_x2, scaled_y2), (0, 0, 255), 1)
 
                 # Adjust ROI to ensure it's within bounds
                 sub_y1 = max(0, y1 - 10)
@@ -131,23 +134,33 @@ def process_image(image_path):
 
                 sub = img[sub_y1:sub_y2, sub_x1:sub_x2]
 
+                # Flag to check if this region has a match
+                has_match = False
+
                 # Check if the ROI (`sub`) is larger than the `pattern`
                 if sub.shape[0] >= pattern.shape[0] and sub.shape[1] >= pattern.shape[1]:
                     res = cv2.matchTemplate(sub, pattern, cv2.TM_CCOEFF_NORMED)
-                    threshold = 0.80
+                    threshold = 0.90
                     loc = np.where(res >= threshold)
 
                     for pt in zip(*loc[::-1]):
+                        # Draw a black rectangle for matches
                         scaled_pt_x = int((pt[0] + sub_x1) * scale_factor)
                         scaled_pt_y = int((pt[1] + sub_y1) * scale_factor)
                         scaled_pt_x2 = int((pt[0] + sub_x1 + w) * scale_factor)
                         scaled_pt_y2 = int((pt[1] + sub_y1 + h) * scale_factor)
 
-                        cv2.rectangle(diff, (scaled_pt_x, scaled_pt_y),
-                                      (scaled_pt_x2, scaled_pt_y2), (0, 0, 0), -1)
-                else:
-                    # Log a warning or handle cases where the subregion is smaller
-                    print(f"Warning: Subregion smaller than pattern for region {i}. Skipping template matching.")
+                        cv2.rectangle(diff, (scaled_pt_x - 3, scaled_pt_y - 3),
+                                      (scaled_pt_x2 + 3, scaled_pt_y2 + 3), (0, 0, 0), -1)
+                        has_match = True  # Mark as matched
+
+                if has_match:
+                    red_rectangle_count -= 1  # Decrement only once per region
+
+            # Display the red rectangle count on the image only if `display_defects` is True
+            if display_defects:
+                cv2.putText(diff, f"Number of defects: {red_rectangle_count}", (10, 30),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
             cv2.imshow('detEEct AOI', diff)
 
@@ -157,6 +170,7 @@ def process_image(image_path):
                 break
             elif char == 'd':
                 show_regions = not show_regions
+                display_defects = not display_defects  # Toggle defect display on 'd'
             elif char == 's':
                 show_mask = not show_mask
 
@@ -165,7 +179,7 @@ def process_image(image_path):
 
 
 def main():
-    image_path = "C:/Users/talha/PycharmProjects/PCB_defect/buyutech_arka_zoomed_defected.jpg"
+    image_path = "C:/Users/talha/PycharmProjects/PCB_defect/buyutech_arka_test_pcbleri/15_hata.jpg"
     process_image(image_path)
 
 
